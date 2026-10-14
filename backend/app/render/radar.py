@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 
 from app.config import settings
 from app.render.geo import feature_collection_to_shapes, merge_polygons, polygon_to_pixel_ring
+from app.render.ridge_geo import crop_ridge_image_to_bbox
 
 
 async def fetch_ridge_gif(client: httpx.AsyncClient, url: str) -> bytes:
@@ -29,7 +30,13 @@ def composite_radar_jpeg(
 
     with Image.open(io.BytesIO(gif_bytes)) as src:
         src = src.convert("RGB")
-        cropped = _crop_ridge_to_bbox(src, bbox)
+        cropped = crop_ridge_image_to_bbox(
+            src,
+            bbox,
+            center_lat=settings.ridge_site_lat,
+            center_lon=settings.ridge_site_lon,
+            range_km=settings.ridge_range_km,
+        )
         img = cropped.resize((width, height), Image.Resampling.LANCZOS)
 
     draw = ImageDraw.Draw(img, "RGBA")
@@ -42,17 +49,6 @@ def composite_radar_jpeg(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path, format="JPEG", quality=88)
     return hashlib.sha256(out_path.read_bytes()).hexdigest()[:12]
-
-
-def _crop_ridge_to_bbox(img: Image.Image, bbox: tuple[float, float, float, float]) -> Image.Image:
-    """Approximate crop of NOAA Ridge GIF using fixed relative margins for KFWS."""
-    w, h = img.size
-    # Ridge Standard GIF is centered on site; use heuristic margins for North Texas AOI.
-    left = int(w * 0.18)
-    top = int(h * 0.12)
-    right = int(w * 0.82)
-    bottom = int(h * 0.88)
-    return img.crop((left, top, right, bottom))
 
 
 def _draw_alert_overlays(
