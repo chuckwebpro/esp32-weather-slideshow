@@ -14,6 +14,5 @@ services:
       PLAYBACK_ADVANCE_SEC: "10"
       NWS_USER_AGENT: "(esp32-weather-slideshow, pinky.local)"
     volumes:
-      # Child of the Apps dataset: apps/esp32-weather-slideshow
-      # Replace POOL with your pool name (Datasets → esp32-weather-slideshow → full path).
-      - /mnt/POOL/apps/esp32-weather-slideshow:/data
+      # pinky: pool name is "apps" (Storage → Pools), dataset esp32-weather-slideshow
+      - /mnt/apps/esp32-weather-slideshow:/data
