@@ -1,5 +1,7 @@
 #include "slideshow_ui.h"
 
+#include "image_loader.h"
+#include "net/slideshow_client.h"
 #include "esp_log.h"
 #include <stdlib.h>
 #include <string.h>
@@ -44,22 +46,22 @@ static void tap_event_cb(lv_event_t *e)
     }
 }
 
-static void swipe_left_cb(lv_event_t *e)
+static void gesture_cb(lv_event_t *e)
 {
     slideshow_ui_t *ui = lv_event_get_user_data(e);
-    if (!ui->paused) {
+    if (!ui->paused || lv_event_get_code(e) != LV_EVENT_GESTURE) {
         return;
     }
-    slideshow_ui_next(ui);
-}
-
-static void swipe_right_cb(lv_event_t *e)
-{
-    slideshow_ui_t *ui = lv_event_get_user_data(e);
-    if (!ui->paused) {
+    lv_indev_t *indev = lv_indev_active();
+    if (!indev) {
         return;
     }
-    slideshow_ui_prev(ui);
+    lv_dir_t dir = lv_indev_get_gesture_dir(indev);
+    if (dir == LV_DIR_LEFT) {
+        slideshow_ui_next(ui);
+    } else if (dir == LV_DIR_RIGHT) {
+        slideshow_ui_prev(ui);
+    }
 }
 
 static void pinch_zoom_cb(lv_event_t *e)
@@ -105,8 +107,8 @@ slideshow_ui_t *slideshow_ui_create(lv_obj_t *root)
     lv_obj_add_flag(ui->pause_badge, LV_OBJ_FLAG_HIDDEN);
 
     lv_obj_add_event_cb(ui->content, tap_event_cb, LV_EVENT_CLICKED, ui);
-    lv_obj_add_event_cb(ui->content, swipe_left_cb, LV_EVENT_GESTURE, ui);
-    lv_obj_add_event_cb(ui->content, swipe_right_cb, LV_EVENT_GESTURE, ui);
+    lv_obj_add_flag(ui->content, LV_OBJ_FLAG_GESTURE_BUBBLE);
+    lv_obj_add_event_cb(ui->content, gesture_cb, LV_EVENT_GESTURE, ui);
     lv_obj_add_event_cb(ui->content, pinch_zoom_cb, LV_EVENT_GESTURE, ui);
 
     return ui;
@@ -166,6 +168,22 @@ static void fill_ham(slideshow_ui_t *ui)
     }
 }
 
+static esp_err_t load_slide_image(slideshow_ui_t *ui, const slide_def_t *slide)
+{
+    if (!slide->url[0]) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    uint8_t *buf = NULL;
+    size_t len = 0;
+    esp_err_t err = slideshow_fetch_image(slide->url, &buf, &len);
+    if (err != ESP_OK) {
+        return err;
+    }
+    err = slideshow_image_set_jpeg(ui->img_widget, buf, len);
+    free(buf);
+    return err;
+}
+
 void slideshow_ui_show_slide(slideshow_ui_t *ui, size_t index)
 {
     if (!ui || ui->manifest.slide_count == 0) {
@@ -192,12 +210,18 @@ void slideshow_ui_show_slide(slideshow_ui_t *ui, size_t index)
     case SLIDE_TYPE_IMAGE:
     case SLIDE_TYPE_OUTLOOK:
         lv_obj_clear_flag(ui->img_widget, LV_OBJ_FLAG_HIDDEN);
-        /* JPEG load: set src after download in app_main task */
-        ESP_LOGI(TAG, "image slide %s url=%s", slide->id, slide->url);
+        if (load_slide_image(ui, slide) != ESP_OK) {
+            ESP_LOGW(TAG, "image load failed for %s", slide->id);
+        }
         break;
     default:
         break;
     }
+}
+
+size_t slideshow_ui_current_index(const slideshow_ui_t *ui)
+{
+    return ui ? ui->current : 0;
 }
 
 size_t slideshow_ui_slide_count(const slideshow_ui_t *ui)

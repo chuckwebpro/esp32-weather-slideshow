@@ -15,6 +15,8 @@ void slideshow_ui_set_manifest(slideshow_ui_t *ui, const slideshow_manifest_t *m
 
 void slideshow_ui_show_slide(slideshow_ui_t *ui, size_t index);
 
+size_t slideshow_ui_current_index(const slideshow_ui_t *ui);
+
 size_t slideshow_ui_slide_count(const slideshow_ui_t *ui);
 
 bool slideshow_ui_is_paused(const slideshow_ui_t *ui);

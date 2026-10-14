@@ -2,7 +2,9 @@ idf_component_register(
     SRCS
         "app_main.c"
         "ui/slideshow_ui.c"
+        "ui/image_loader.c"
         "net/slideshow_client.c"
+        "net/wifi_sta.c"
         "audio/alert_audio.c"
     INCLUDE_DIRS "."
     REQUIRES
@@ -14,4 +16,5 @@ idf_component_register(
         json
         lvgl
         crowpanel
+        esp_jpeg
 )

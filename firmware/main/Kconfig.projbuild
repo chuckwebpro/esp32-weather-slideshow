@@ -16,4 +16,12 @@ config SLIDESHOW_ADVANCE_MS
     default 10000
     range 3000 60000
 
+config SLIDESHOW_WIFI_SSID
+    string "WiFi SSID"
+    default "your-ssid"
+
+config SLIDESHOW_WIFI_PASSWORD
+    string "WiFi password"
+    default "your-password"
+
 endmenu

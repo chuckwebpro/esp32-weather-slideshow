@@ -38,16 +38,16 @@ Open `http://127.0.0.1:8080/api/v1/slideshow`.
 
 ## Quick start — brain (firmware)
 
-Requires [ESP-IDF 5.4+](https://docs.espressif.com/projects/esp-idf/) with ESP32-P4 support.
+See **[docs/brain-setup.md](docs/brain-setup.md)**. pinky should be healthy first (`curl http://pinky.local:8787/health`).
 
 ```bash
 cd firmware
 idf.py set-target esp32p4
-idf.py menuconfig   # WiFi + SLIDESHOW_BASE_URL
+idf.py menuconfig   # WiFi, SLIDESHOW_BASE_URL=http://pinky.local:8787
 idf.py build flash monitor
 ```
 
-Base on Elecrow’s ESP-IDF examples for MIPI-DSI and GT911 touch; this project wires slideshow logic, HTTP client, and gestures on top.
+Merge Elecrow display/touch init into `firmware/components/crowpanel/` — the repo includes slideshow UI, HTTP client, JPEG decode, and gestures.
 
 ## API
 
