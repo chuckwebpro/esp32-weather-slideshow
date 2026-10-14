@@ -2,7 +2,7 @@
 
 Local-network weather, radar, HAM, and SPC outlook slideshow for the Elecrow CrowPanel Advanced 10.1" ESP32-P4 display. **pinky.local** (TrueNAS) composes data and images; **brain.local** (ESP32-P4) renders them with LVGL.
 
-See [pre-plan.md](pre-plan.md) for product requirements.
+See [pre-plan.md](pre-plan.md) for product requirements. **Current status:** [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md).
 
 ## Hostnames
 
