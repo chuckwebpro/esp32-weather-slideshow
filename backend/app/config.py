@@ -31,13 +31,16 @@ class Settings(BaseSettings):
     spc_day1_cat_url: str = (
         "https://www.spc.noaa.gov/products/outlook/day1otlk_cat.lyr.geojson"
     )
+    us_states_geojson_url: str = (
+        "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json"
+    )
 
-    # NOAA Ridge base (KFWS)
+    # NOAA Ridge standard products (KFWS); velocity lives under base_velocity/
     ridge_reflectivity_url: str = (
         "https://radar.weather.gov/ridge/standard/KFWS_0.gif"
     )
     ridge_velocity_url: str = (
-        "https://radar.weather.gov/ridge/standard/KFWS_1.gif"
+        "https://radar.weather.gov/ridge/standard/base_velocity/KFWS_0.gif"
     )
 
 

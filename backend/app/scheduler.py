@@ -12,6 +12,7 @@ from app.render.placeholders import ensure_placeholder_jpeg
 from app.render.radar import composite_radar_jpeg, fetch_ridge_gif
 from app.services.alerts import fetch_alerts_geojson, parse_alerts_geojson
 from app.services.ham import fetch_ham
+from app.services.basemap import fetch_us_states_geojson
 from app.services.spc import fetch_spc_geojson
 from app.services.weather import fetch_weather
 from app.state import DataStore
@@ -70,8 +71,9 @@ async def _refresh_ham(store: DataStore, client: httpx.AsyncClient) -> None:
 async def _refresh_spc(store: DataStore, client: httpx.AsyncClient) -> None:
     try:
         geojson, rev = await fetch_spc_geojson(client)
+        states = await fetch_us_states_geojson(client, store.data_dir)
         out = store.media_path("spc_day1_cat.jpg")
-        file_rev = render_spc_outlook_jpeg(geojson, out)
+        file_rev = render_spc_outlook_jpeg(geojson, out, states_geojson=states)
         store.set_revision("spc_day1_cat.jpg", file_rev or rev)
     except Exception:
         logger.exception("SPC refresh failed")
