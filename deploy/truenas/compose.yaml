@@ -2,6 +2,7 @@ name: esp32-weather-slideshow
 services:
   slideshow-api:
     image: ghcr.io/chuckwebpro/esp32-weather-slideshow-api:latest
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "8787:8080"
@@ -15,6 +16,8 @@ services:
       NWS_USER_AGENT: "(esp32-weather-slideshow, pinky.local)"
       RIDGE_REFLECTIVITY_URL: "https://radar.weather.gov/ridge/standard/KFWS_0.gif"
       RIDGE_VELOCITY_URL: "https://radar.weather.gov/ridge/standard/base_velocity/KFWS_0.gif"
+      RIDGE_OFFSET_KM_EAST: "16.093"
+      RIDGE_OFFSET_KM_NORTH: "0"
     volumes:
       # pinky: pool name is "apps" (Storage → Pools), dataset esp32-weather-slideshow
       - /mnt/apps/esp32-weather-slideshow:/data

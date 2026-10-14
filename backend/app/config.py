@@ -31,6 +31,9 @@ class Settings(BaseSettings):
 
     # Radar crop bbox (lon_w, lat_s, lon_e, lat_n) — NE DFW / Collin (see pre-plan AOI)
     radar_bbox: tuple[float, float, float, float] = (-97.08, 32.78, -96.28, 33.82)
+    # Fine-tune crop vs Ridge alignment (10 mi ≈ 16.093 km east)
+    ridge_offset_km_east: float = 16.093
+    ridge_offset_km_north: float = 0.0
 
     open_meteo_url: str = "https://api.open-meteo.com/v1/forecast"
     nws_alerts_url: str = "https://api.weather.gov/alerts/active"

@@ -43,6 +43,18 @@ def latlon_to_ridge_pixel(
     return px, py
 
 
+def shift_bbox_km(
+    bbox: tuple[float, float, float, float],
+    km_east: float,
+    km_north: float,
+) -> tuple[float, float, float, float]:
+    lon_w, lat_s, lon_e, lat_n = bbox
+    lat_c = (lat_s + lat_n) / 2.0
+    dlon = km_east / (111.32 * math.cos(math.radians(lat_c)))
+    dlat = km_north / 111.32
+    return (lon_w + dlon, lat_s + dlat, lon_e + dlon, lat_n + dlat)
+
+
 def crop_ridge_image_to_bbox(
     img: Image.Image,
     bbox: tuple[float, float, float, float],
@@ -50,8 +62,12 @@ def crop_ridge_image_to_bbox(
     center_lat: float,
     center_lon: float,
     range_km: float,
+    offset_km_east: float = 0.0,
+    offset_km_north: float = 0.0,
 ) -> Image.Image:
     """Crop Ridge GIF to geographic bbox (lon_w, lat_s, lon_e, lat_n)."""
+    if offset_km_east or offset_km_north:
+        bbox = shift_bbox_km(bbox, offset_km_east, offset_km_north)
     lon_w, lat_s, lon_e, lat_n = bbox
     w, h = img.size
 

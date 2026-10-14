@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="ESP32 Weather Slideshow API", version="0.1.2", lifespan=lifespan)
+app = FastAPI(title="ESP32 Weather Slideshow API", version="0.1.3", lifespan=lifespan)
 
 
 @app.get("/health")

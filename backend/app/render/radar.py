@@ -27,15 +27,26 @@ def composite_radar_jpeg(
     width = settings.image_width
     height = settings.image_height
     bbox = settings.radar_bbox
+    if settings.ridge_offset_km_east or settings.ridge_offset_km_north:
+        from app.render.ridge_geo import shift_bbox_km
+
+        bbox = shift_bbox_km(
+            bbox,
+            settings.ridge_offset_km_east,
+            settings.ridge_offset_km_north,
+        )
 
     with Image.open(io.BytesIO(gif_bytes)) as src:
         src = src.convert("RGB")
+        crop_bbox = settings.radar_bbox
         cropped = crop_ridge_image_to_bbox(
             src,
-            bbox,
+            crop_bbox,
             center_lat=settings.ridge_site_lat,
             center_lon=settings.ridge_site_lon,
             range_km=settings.ridge_range_km,
+            offset_km_east=settings.ridge_offset_km_east,
+            offset_km_north=settings.ridge_offset_km_north,
         )
         img = cropped.resize((width, height), Image.Resampling.LANCZOS)
 
