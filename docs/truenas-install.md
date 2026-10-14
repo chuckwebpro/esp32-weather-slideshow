@@ -89,7 +89,8 @@ Pull a new image tag from GHCR (`latest` or commit SHA), then restart the app fr
 
 ## Troubleshooting
 
-- **Radar slides show `"revision":"0"`** — Ridge GIF URLs must use lowercase `ridge/standard/` (not `Standard/`). Add `RIDGE_REFLECTIVITY_URL` / `RIDGE_VELOCITY_URL` to Compose (see [compose.yaml](../deploy/truenas/compose.yaml)), restart the app, wait ~3 minutes, then re-check `/api/v1/slideshow`. Or pull a newer GHCR image that includes the fix.
+- **Radar slides show `"revision":"0"`** — Ridge GIF URLs must use lowercase `ridge/standard/` (not `Standard/`). Velocity uses `ridge/standard/base_velocity/KFWS_0.gif`. Update Compose env vars and restart, or pull a newer GHCR image.
+- **SPC outlook has no state map** — Requires a recent API image (bundled US states GeoJSON). Restart the app after GHCR publishes `latest`; outlook `revision` should change after the next refresh (~3 min).
 - **Permission denied on volume**: path must match the dataset mount exactly; Apps role on parent `apps` is normal.
 - **Avoid custom Docker networks** in Compose v1; use default bridge + published ports only.
 - **Outbound API failures**: cached JPEGs and last JSON remain under `/data` until refresh succeeds.

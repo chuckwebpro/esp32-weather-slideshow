@@ -13,6 +13,11 @@ logger = logging.getLogger(__name__)
 
 CACHE_NAME = "us_states.json"
 CACHE_MAX_AGE_SEC = 7 * 24 * 3600
+BUNDLED_STATES = Path(__file__).resolve().parent.parent / "assets" / "us_states.geojson"
+
+
+def load_us_states_bundled() -> dict:
+    return json.loads(BUNDLED_STATES.read_text(encoding="utf-8"))
 
 
 def _cache_path(data_dir: Path) -> Path:
@@ -29,7 +34,8 @@ def load_us_states_cache(data_dir: Path) -> dict | None:
         return None
 
 
-async def fetch_us_states_geojson(client: httpx.AsyncClient, data_dir: Path) -> dict:
+async def get_us_states_geojson(client: httpx.AsyncClient, data_dir: Path) -> dict:
+    """Bundled CONUS states always available; optional network refresh into cache."""
     path = _cache_path(data_dir)
     if path.is_file():
         age = datetime.now(timezone.utc).timestamp() - path.stat().st_mtime
@@ -38,10 +44,14 @@ async def fetch_us_states_geojson(client: httpx.AsyncClient, data_dir: Path) -> 
             if cached:
                 return cached
 
-    r = await client.get(settings.us_states_geojson_url, timeout=60.0)
-    r.raise_for_status()
-    data = r.json()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data), encoding="utf-8")
-    logger.info("Cached US states GeoJSON for SPC basemap")
-    return data
+    try:
+        r = await client.get(settings.us_states_geojson_url, timeout=60.0)
+        r.raise_for_status()
+        data = r.json()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(data), encoding="utf-8")
+        logger.info("Cached US states GeoJSON for SPC basemap")
+        return data
+    except Exception:
+        logger.warning("Using bundled US states GeoJSON (download failed or blocked)")
+        return load_us_states_bundled()

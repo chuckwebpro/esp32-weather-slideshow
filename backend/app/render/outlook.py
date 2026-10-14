@@ -47,7 +47,8 @@ def _draw_states_basemap(
         for g in parts:
             ring = polygon_to_pixel_ring(g, bbox, width, height)
             if len(ring) >= 3:
-                draw.polygon(ring, fill=(48, 58, 72, 255), outline=(90, 105, 120, 255))
+                draw.polygon(ring, fill=(88, 98, 112, 255), outline=(200, 210, 220, 255))
+                draw.line(ring + [ring[0]], fill=(220, 228, 235, 255), width=1)
 
 
 def render_spc_outlook_jpeg(
@@ -59,13 +60,16 @@ def render_spc_outlook_jpeg(
     height = settings.image_height
     bbox = CONUS_BBOX
 
-    img = Image.new("RGBA", (width, height), (28, 36, 48, 255))
+    # Ocean background
+    img = Image.new("RGBA", (width, height), (12, 22, 38, 255))
     draw = ImageDraw.Draw(img, "RGBA")
 
     if states_geojson:
         _draw_states_basemap(draw, states_geojson, bbox, width, height)
     else:
-        draw.rectangle((0, 0, width, height), fill=(28, 36, 48, 255))
+        from app.services.basemap import load_us_states_bundled
+
+        _draw_states_basemap(draw, load_us_states_bundled(), bbox, width, height)
 
     for feat in geojson.get("features", []):
         props = feat.get("properties") or {}
