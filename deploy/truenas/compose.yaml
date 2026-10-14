@@ -1,0 +1,17 @@
+name: esp32-weather-slideshow
+services:
+  slideshow-api:
+    image: ghcr.io/chuckwebpro/esp32-weather-slideshow-api:latest
+    restart: unless-stopped
+    ports:
+      - "8787:8080"
+    environment:
+      DATA_DIR: /data
+      TZ: America/Chicago
+      SLIDESHOW_LAT: "33.20"
+      SLIDESHOW_LON: "-96.70"
+      REFRESH_AFTER_SEC: "45"
+      PLAYBACK_ADVANCE_SEC: "10"
+      NWS_USER_AGENT: "(esp32-weather-slideshow, pinky.local)"
+    volumes:
+      - /mnt/tank/apps/esp32-weather-slideshow:/data

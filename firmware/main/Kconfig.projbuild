@@ -1,0 +1,19 @@
+menu "Slideshow"
+
+config SLIDESHOW_BASE_URL
+    string "TrueNAS slideshow API base URL"
+    default "http://pinky.local:8787"
+    help
+        Base URL for pinky.local (no trailing slash).
+
+config SLIDESHOW_POLL_MS
+    int "Manifest poll interval (ms)"
+    default 45000
+    range 10000 300000
+
+config SLIDESHOW_ADVANCE_MS
+    int "Auto-advance interval (ms)"
+    default 10000
+    range 3000 60000
+
+endmenu
