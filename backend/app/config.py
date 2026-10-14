@@ -34,10 +34,10 @@ class Settings(BaseSettings):
 
     # NOAA Ridge base (KFWS)
     ridge_reflectivity_url: str = (
-        "https://radar.weather.gov/ridge/Standard/KFWS_0.gif"
+        "https://radar.weather.gov/ridge/standard/KFWS_0.gif"
     )
     ridge_velocity_url: str = (
-        "https://radar.weather.gov/ridge/Standard/KFWS_1.gif"
+        "https://radar.weather.gov/ridge/standard/KFWS_1.gif"
     )
 
 

@@ -1,6 +1,6 @@
 # TrueNAS Custom App — pinky.local
 
-Deploy the slideshow API on TrueNAS SCALE using **Apps → Discover Apps → Custom App → Install via YAML**.
+Deploy the slideshow API on TrueNAS SCALE using **Apps → Discover Apps → Custom App → ⋮ → Install via YAML**.
 
 ## Dataset (your setup)
 
@@ -10,13 +10,42 @@ Create a **child dataset** under the existing **apps** dataset (the one TrueNAS 
 
 That matches the usual Apps layout. You do not need a separate top-level path like `tank/apps/...` unless your pool is literally named that way.
 
-On the host, the bind mount is always:
+On the host, Docker needs the **absolute** bind path:
 
 ```text
 /mnt/<pool-name>/apps/esp32-weather-slideshow
 ```
 
-Find `<pool-name>` in the UI: open the **esp32-weather-slideshow** dataset and note the full path (or read it from **Storage → Datasets**). Example: if the path shows `/mnt/storage/apps/esp32-weather-slideshow`, use that exact string in Compose.
+The dataset **Details** panel often shows only the ZFS-relative path:
+
+```text
+apps/esp32-weather-slideshow
+```
+
+That is normal — it is not the Docker mount path.
+
+### Find `<pool-name>` (pick one)
+
+1. **Storage → Pools** — the pool name is in the table (e.g. `tank`, `storage`, `main`).  
+   Bind mount: `/mnt/THAT_NAME/apps/esp32-weather-slideshow`
+
+2. **Datasets tree** — the **root** row above `apps` and `storage` is usually the pool name.
+
+3. **Shell on pinky** (SSH):
+
+   ```bash
+   zfs list -H -o name,mountpoint | grep esp32-weather-slideshow
+   ```
+
+   Use the `mountpoint` column (starts with `/mnt/`).
+
+**pinky.local:** the pool is named **`apps`** (Storage → Pools), not `tank`. Dataset ZFS path `apps/esp32-weather-slideshow` → Docker bind:
+
+```yaml
+- /mnt/apps/esp32-weather-slideshow:/data
+```
+
+Rule: `/mnt/` + **pool name** + `/` + **dataset path below the pool root**. Here the dataset is a direct child of pool `apps`, so there is only one `apps` in the mount path.
 
 ## Prerequisites
 
