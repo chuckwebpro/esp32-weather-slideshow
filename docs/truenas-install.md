@@ -2,28 +2,42 @@
 
 Deploy the slideshow API on TrueNAS SCALE using **Apps → Discover Apps → Custom App → Install via YAML**.
 
+## Dataset (your setup)
+
+Create a **child dataset** under the existing **apps** dataset (the one TrueNAS uses for application storage):
+
+**`apps` → `esp32-weather-slideshow`**
+
+That matches the usual Apps layout. You do not need a separate top-level path like `tank/apps/...` unless your pool is literally named that way.
+
+On the host, the bind mount is always:
+
+```text
+/mnt/<pool-name>/apps/esp32-weather-slideshow
+```
+
+Find `<pool-name>` in the UI: open the **esp32-weather-slideshow** dataset and note the full path (or read it from **Storage → Datasets**). Example: if the path shows `/mnt/storage/apps/esp32-weather-slideshow`, use that exact string in Compose.
+
 ## Prerequisites
 
 - TrueNAS SCALE 24.10+ with Apps enabled
-- Dataset: `/mnt/tank/apps/esp32-weather-slideshow` (adjust pool name if not `tank`)
+- Dataset **`apps/esp32-weather-slideshow`** created (as above)
 - GHCR image public **or** registry credentials configured in TrueNAS for private pulls
 - mDNS/DNS: clients resolve `pinky.local` to this host
 
 ## Steps
 
-1. **Create dataset**  
-   Storage → Datasets → Add dataset `tank/apps/esp32-weather-slideshow`.
+1. **Dataset** — Already done if you see `esp32-weather-slideshow` under `apps`.
 
-2. **Copy environment**  
-   Use [deploy/truenas/.env.example](../deploy/truenas/.env.example) values in the Custom App environment section, or bind an env file if your SCALE version supports it.
+2. **Edit Compose mount** — In [deploy/truenas/compose.yaml](../deploy/truenas/compose.yaml), replace `/mnt/POOL/apps/esp32-weather-slideshow` with your real path from the dataset screen.
 
-3. **Install via YAML**  
-   Paste [deploy/truenas/compose.yaml](../deploy/truenas/compose.yaml) into **Custom Config**.
+3. **Install via YAML** — Paste the edited Compose into **Custom Config**.
 
-4. **Port**  
-   Host **8787** → container **8080**.
+4. **Environment** — Optional overrides from [deploy/truenas/.env.example](../deploy/truenas/.env.example) (lat/lon, `NWS_USER_AGENT`, etc.).
 
-5. **Verify**
+5. **Port** — Host **8787** → container **8080** (already in Compose).
+
+6. **Verify**
 
    ```bash
    curl -s http://pinky.local:8787/health
@@ -34,7 +48,7 @@ Deploy the slideshow API on TrueNAS SCALE using **Apps → Discover Apps → Cus
 
 Configure the ESP32-P4 firmware with:
 
-```
+```text
 CONFIG_SLIDESHOW_BASE_URL="http://pinky.local:8787"
 ```
 
@@ -46,6 +60,6 @@ Pull a new image tag from GHCR (`latest` or commit SHA), then restart the app fr
 
 ## Troubleshooting
 
-- **Permission denied on volume**: confirm the dataset path exists and Apps storage is configured.
+- **Permission denied on volume**: path must match the dataset mount exactly; Apps role on parent `apps` is normal.
 - **Avoid custom Docker networks** in Compose v1; use default bridge + published ports only.
 - **Outbound API failures**: cached JPEGs and last JSON remain under `/data` until refresh succeeds.

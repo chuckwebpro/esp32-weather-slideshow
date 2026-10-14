@@ -20,7 +20,7 @@ See [pre-plan.md](pre-plan.md) for product requirements.
 
 ## Quick start — pinky (TrueNAS)
 
-1. Create dataset: `/mnt/tank/apps/esp32-weather-slideshow`
+1. Create dataset **`apps/esp32-weather-slideshow`** (under TrueNAS Apps storage); bind mount `/mnt/<pool>/apps/esp32-weather-slideshow` in Compose
 2. Install Custom App from [docs/truenas-install.md](docs/truenas-install.md)
 3. Verify: `curl http://pinky.local:8787/health`
 
