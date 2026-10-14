@@ -14,20 +14,32 @@ async def fetch_ham(client: httpx.AsyncClient) -> tuple[HamSnapshot, str]:
     r.raise_for_status()
     root = ET.fromstring(r.content)
 
-    def text(path: str) -> str | None:
-        el = root.find(path)
-        return el.text.strip() if el is not None and el.text else None
+    sol = root.find(".//solardata") or root
 
-    sfi = _int(text(".//solar/sfi"))
-    k = _int(text(".//solar/kindex"))
-    a = _int(text(".//solar/aindex"))
+    def text(tag: str) -> str | None:
+        el = sol.find(tag)
+        if el is not None and el.text:
+            return el.text.strip()
+        return None
+
+    sfi = _int(text("solarflux"))
+    k = _int(text("kindex"))
+    a = _int(text("aindex"))
 
     bands: list[HamBandLine] = []
-    for band_el in root.findall(".//band"):
-        name = band_el.get("name") or "?"
-        day = band_el.findtext("day") or band_el.findtext("daytext")
-        night = band_el.findtext("night") or band_el.findtext("nighttext")
-        bands.append(HamBandLine(band=name, day=day, night=night))
+    calc = sol.find("calculatedconditions")
+    if calc is not None:
+        by_name: dict[str, HamBandLine] = {}
+        for band_el in calc.findall("band"):
+            name = band_el.get("name") or "?"
+            when = band_el.get("time") or "day"
+            cond = (band_el.text or "").strip()
+            line = by_name.setdefault(name, HamBandLine(band=name))
+            if when == "night":
+                line.night = cond
+            else:
+                line.day = cond
+        bands = list(by_name.values())
 
     summary_parts = []
     if sfi is not None:
