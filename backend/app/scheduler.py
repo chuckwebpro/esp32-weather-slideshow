@@ -75,6 +75,12 @@ async def _refresh_spc(store: DataStore, client: httpx.AsyncClient) -> None:
         out = store.media_path("spc_day1_cat.jpg")
         file_rev = render_spc_outlook_jpeg(geojson, out, states_geojson=states)
         store.set_revision("spc_day1_cat.jpg", file_rev or rev)
+        n_states = len(states.get("features", []))
+        logger.info(
+            "SPC outlook rendered with CONUS basemap (%d states), revision=%s",
+            n_states,
+            file_rev or rev,
+        )
     except Exception:
         logger.exception("SPC refresh failed")
 

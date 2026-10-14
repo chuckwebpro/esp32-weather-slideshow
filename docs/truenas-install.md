@@ -70,6 +70,7 @@ Rule: `/mnt/` + **pool name** + `/` + **dataset path below the pool root**. Here
 
    ```bash
    curl -s http://pinky.local:8787/health
+   # Expect: "spc_basemap_bundled": true and spc_revision not stuck on an old value
    curl -s http://pinky.local:8787/api/v1/slideshow | head
    ```
 

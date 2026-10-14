@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from app.config import settings
 from app.manifest import build_slideshow_response
 from app.scheduler import ensure_bootstrap_media, refresh_all, start_scheduler
+from app.services.basemap import BUNDLED_STATES
 from app.state import DataStore
 
 logging.basicConfig(level=logging.INFO)
@@ -33,7 +34,7 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="ESP32 Weather Slideshow API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="ESP32 Weather Slideshow API", version="0.1.1", lifespan=lifespan)
 
 
 @app.get("/health")
@@ -41,6 +42,9 @@ def health() -> dict:
     snap = store.snapshot()
     return {
         "status": "ok",
+        "api_version": app.version,
+        "spc_basemap_bundled": BUNDLED_STATES.is_file(),
+        "spc_revision": store.get_revision("spc_day1_cat.jpg"),
         "last_refresh": snap.last_refresh.isoformat() if snap.last_refresh else None,
     }
 
