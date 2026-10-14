@@ -13,6 +13,8 @@ services:
       REFRESH_AFTER_SEC: "45"
       PLAYBACK_ADVANCE_SEC: "10"
       NWS_USER_AGENT: "(esp32-weather-slideshow, pinky.local)"
+      RIDGE_REFLECTIVITY_URL: "https://radar.weather.gov/ridge/standard/KFWS_0.gif"
+      RIDGE_VELOCITY_URL: "https://radar.weather.gov/ridge/standard/KFWS_1.gif"
     volumes:
       # pinky: pool name is "apps" (Storage → Pools), dataset esp32-weather-slideshow
       - /mnt/apps/esp32-weather-slideshow:/data
