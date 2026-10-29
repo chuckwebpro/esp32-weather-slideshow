@@ -23,30 +23,29 @@ def composite_radar_jpeg(
     alert_geojson: dict | None,
     out_path: Path,
     title: str,
+    bbox: tuple[float, float, float, float] | None = None,
 ) -> str:
     width = settings.image_width
     height = settings.image_height
-    bbox = settings.radar_bbox
-    if settings.ridge_offset_km_east or settings.ridge_offset_km_north:
-        from app.render.ridge_geo import shift_bbox_km
+    if bbox is None:
+        bbox = settings.radar_bbox
+        if settings.ridge_offset_km_east or settings.ridge_offset_km_north:
+            from app.render.ridge_geo import shift_bbox_km
 
-        bbox = shift_bbox_km(
-            bbox,
-            settings.ridge_offset_km_east,
-            settings.ridge_offset_km_north,
-        )
+            bbox = shift_bbox_km(
+                bbox,
+                settings.ridge_offset_km_east,
+                settings.ridge_offset_km_north,
+            )
 
     with Image.open(io.BytesIO(gif_bytes)) as src:
         src = src.convert("RGB")
-        crop_bbox = settings.radar_bbox
         cropped = crop_ridge_image_to_bbox(
             src,
-            crop_bbox,
+            bbox,
             center_lat=settings.ridge_site_lat,
             center_lon=settings.ridge_site_lon,
             range_km=settings.ridge_range_km,
-            offset_km_east=settings.ridge_offset_km_east,
-            offset_km_north=settings.ridge_offset_km_north,
         )
         img = cropped.resize((width, height), Image.Resampling.LANCZOS)
 
@@ -59,6 +58,58 @@ def composite_radar_jpeg(
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path, format="JPEG", quality=88)
+    return hashlib.sha256(out_path.read_bytes()).hexdigest()[:12]
+
+
+def iem_reflectivity_url(
+    bbox: tuple[float, float, float, float],
+    width: int,
+    height: int,
+) -> str:
+    lon_w, lat_s, lon_e, lat_n = bbox
+    return (
+        f"{settings.iem_n0q_wms_url}?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap"
+        "&LAYERS=nexrad-n0q-900913&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE"
+        f"&SRS=EPSG:4326&BBOX={lon_w:.5f},{lat_s:.5f},{lon_e:.5f},{lat_n:.5f}"
+        f"&WIDTH={width}&HEIGHT={height}"
+    )
+
+
+async def fetch_iem_reflectivity(
+    client: httpx.AsyncClient,
+    bbox: tuple[float, float, float, float],
+) -> bytes:
+    url = iem_reflectivity_url(bbox, settings.image_width, settings.image_height)
+    r = await client.get(url, timeout=60.0)
+    r.raise_for_status()
+    if "image" not in r.headers.get("content-type", ""):
+        raise ValueError(f"IEM radar was not an image ({r.headers.get('content-type')})")
+    return r.content
+
+
+def composite_iem_jpeg(
+    png_bytes: bytes,
+    alert_geojson: dict | None,
+    out_path: Path,
+    title: str,
+    bbox: tuple[float, float, float, float],
+) -> str:
+    """Place a transparent N0Q render on a dark field at the panel size."""
+    width = settings.image_width
+    height = settings.image_height
+    with Image.open(io.BytesIO(png_bytes)) as src:
+        radar = src.convert("RGBA")
+        if radar.size != (width, height):
+            radar = radar.resize((width, height), Image.Resampling.LANCZOS)
+    img = Image.new("RGB", (width, height), (8, 12, 20))
+    img.paste(radar, (0, 0), radar)
+    draw = ImageDraw.Draw(img, "RGBA")
+    draw.rectangle((0, 0, width, 28), fill=(0, 0, 0, 160))
+    draw.text((8, 6), title, fill=(255, 255, 255))
+    if alert_geojson:
+        _draw_alert_overlays(draw, alert_geojson, bbox, width, height)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    img.save(out_path, format="JPEG", quality=90)
     return hashlib.sha256(out_path.read_bytes()).hexdigest()[:12]
 
 

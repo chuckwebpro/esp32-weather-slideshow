@@ -27,7 +27,8 @@ static void style_text_panel(lv_obj_t *panel)
     lv_obj_set_style_bg_opa(panel, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(panel, 0, 0);
     lv_obj_set_style_pad_all(panel, 36, 0);
-    lv_obj_set_style_pad_row(panel, 18, 0);
+    lv_obj_set_style_pad_row(panel, 12, 0);
+    lv_obj_set_style_text_color(panel, lv_color_white(), 0);
     lv_obj_set_flex_flow(panel, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(panel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_set_scrollable(panel, false);
@@ -37,6 +38,7 @@ static void style_label(lv_obj_t *lbl, const lv_font_t *font)
 {
     lv_obj_set_width(lbl, LV_PCT(100));
     lv_label_set_long_mode(lbl, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_color(lbl, lv_color_white(), 0);
     if (font) {
         lv_obj_set_style_text_font(lbl, font, 0);
     }
@@ -155,19 +157,19 @@ void slideshow_ui_set_manifest(slideshow_ui_t *ui, const slideshow_manifest_t *m
     }
 }
 
-static lv_obj_t *add_stat(lv_obj_t *row, const char *caption, const char *value)
+static lv_obj_t *add_stat(lv_obj_t *row, const char *caption, const char *value, const char *hint)
 {
     lv_obj_t *card = lv_obj_create(row);
-    lv_obj_set_height(card, 148);
+    lv_obj_set_height(card, 210);
     lv_obj_set_flex_grow(card, 1);
     lv_obj_set_style_bg_color(card, lv_color_hex(0x1C1C1C), 0);
     lv_obj_set_style_bg_opa(card, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(card, 16, 0);
     lv_obj_set_style_border_width(card, 0, 0);
     lv_obj_set_style_pad_all(card, 18, 0);
-    lv_obj_set_style_pad_row(card, 8, 0);
+    lv_obj_set_style_pad_row(card, 6, 0);
     lv_obj_set_flex_flow(card, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(card, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_set_flex_align(card, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_set_scrollable(card, false);
 
     lv_obj_t *cap = lv_label_create(card);
@@ -177,8 +179,18 @@ static lv_obj_t *add_stat(lv_obj_t *row, const char *caption, const char *value)
 
     lv_obj_t *val = lv_label_create(card);
     lv_label_set_text(val, value);
+    lv_obj_set_width(val, LV_PCT(100));
     lv_obj_set_style_text_font(val, &lv_font_montserrat_28, 0);
     lv_obj_set_style_text_color(val, lv_color_white(), 0);
+
+    if (hint && hint[0]) {
+        lv_obj_t *note = lv_label_create(card);
+        lv_label_set_text(note, hint);
+        lv_obj_set_width(note, LV_PCT(100));
+        lv_label_set_long_mode(note, LV_LABEL_LONG_WRAP);
+        lv_obj_set_style_text_font(note, &lv_font_montserrat_20, 0);
+        lv_obj_set_style_text_color(note, lv_color_hex(0xC5CAD0), 0);
+    }
     return card;
 }
 
@@ -186,7 +198,7 @@ static lv_obj_t *add_stat_row(lv_obj_t *parent)
 {
     lv_obj_t *row = lv_obj_create(parent);
     lv_obj_set_width(row, LV_PCT(100));
-    lv_obj_set_height(row, 168);
+    lv_obj_set_height(row, 220);
     lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(row, 0, 0);
     lv_obj_set_style_pad_all(row, 0, 0);
@@ -194,6 +206,71 @@ static lv_obj_t *add_stat_row(lv_obj_t *parent)
     lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
     lv_obj_set_scrollable(row, false);
     return row;
+}
+
+static const char *uv_word(float uv)
+{
+    if (uv < 3.f) {
+        return "Low";
+    }
+    if (uv < 6.f) {
+        return "Moderate";
+    }
+    if (uv < 8.f) {
+        return "High";
+    }
+    if (uv < 11.f) {
+        return "Very high";
+    }
+    return "Extreme";
+}
+
+static const char *sfi_word(int sfi)
+{
+    if (sfi >= 150) {
+        return "Excellent";
+    }
+    if (sfi >= 120) {
+        return "Good";
+    }
+    if (sfi >= 80) {
+        return "Fair";
+    }
+    return "Low";
+}
+
+static const char *disturbance_word(int value, bool daily)
+{
+    int quiet = daily ? 7 : 1;
+    int unsettled = daily ? 15 : 3;
+    int active = daily ? 29 : 4;
+    if (value <= quiet) {
+        return "Quiet";
+    }
+    if (value <= unsettled) {
+        return "Unsettled";
+    }
+    if (value <= active) {
+        return "Active";
+    }
+    return "Storm";
+}
+
+static const char *hf_headline(const ham_data_t *h)
+{
+    if (h->k_index >= 5 || h->a_index >= 30) {
+        return "HF is rough — geomagnetic storm";
+    }
+    if (h->k_index >= 4 || h->a_index >= 16) {
+        return "HF is unsettled right now";
+    }
+    if (h->sfi >= 120) {
+        return "HF looks good";
+    }
+    if (h->sfi >= 80) {
+        return "HF looks fair";
+    }
+    return "HF is quiet, but solar flux is low";
 }
 
 static void fill_weather(slideshow_ui_t *ui)
@@ -231,17 +308,26 @@ static void fill_weather(slideshow_ui_t *ui)
 
     lv_obj_t *row = add_stat_row(ui->weather_panel);
     snprintf(line, sizeof(line), "%.0f%%", w->humidity_pct);
-    add_stat(row, "Humidity", line);
+    add_stat(row, "Humidity", line, "Moisture in the air");
     if (w->wind_direction[0]) {
-        snprintf(line, sizeof(line), "%.0f %s", w->wind_mph, w->wind_direction);
+        snprintf(line, sizeof(line), "%.0f mph  %s", w->wind_mph, w->wind_direction);
     } else {
         snprintf(line, sizeof(line), "%.0f mph", w->wind_mph);
     }
-    add_stat(row, "Wind", line);
+    add_stat(row, "Wind", line, "Sustained, with direction");
     snprintf(line, sizeof(line), "%.2f in", w->pressure_inhg);
-    add_stat(row, "Pressure", line);
-    snprintf(line, sizeof(line), "%.0f", w->uv_index);
-    add_stat(row, "UV", line);
+    add_stat(row, "Pressure", line, "Rising often means fair");
+    snprintf(line, sizeof(line), "%.0f  %s", w->uv_index, uv_word(w->uv_index));
+    add_stat(row, "UV", line, "0 is low, 11 is extreme");
+
+    if (w->sunrise[0] || w->sunset[0]) {
+        lv_obj_t *sun = lv_label_create(ui->weather_panel);
+        style_label(sun, &lv_font_montserrat_20);
+        lv_obj_set_style_text_color(sun, lv_color_hex(0xC5CAD0), 0);
+        snprintf(line, sizeof(line), "Sunrise %s     Sunset %s",
+                 w->sunrise[0] ? w->sunrise : "--", w->sunset[0] ? w->sunset : "--");
+        lv_label_set_text(sun, line);
+    }
 }
 
 static void fill_ham(slideshow_ui_t *ui)
@@ -256,19 +342,25 @@ static void fill_ham(slideshow_ui_t *ui)
 
     lv_obj_t *summary = lv_label_create(ui->ham_panel);
     style_label(summary, &lv_font_montserrat_36);
-    lv_label_set_text(summary, (h->valid && h->summary[0]) ? h->summary : "Unavailable");
+    lv_label_set_text(summary, h->valid ? hf_headline(h) : "Unavailable");
+
+    lv_obj_t *explain = lv_label_create(ui->ham_panel);
+    style_label(explain, &lv_font_montserrat_20);
+    lv_obj_set_style_text_color(explain, lv_color_hex(0xC5CAD0), 0);
+    lv_label_set_text(explain,
+                      "These three numbers describe the sun and the geomagnetic field, not a single band.");
 
     if (!h->valid) {
         return;
     }
-    char line[24];
+    char line[32];
     lv_obj_t *row = add_stat_row(ui->ham_panel);
-    snprintf(line, sizeof(line), "%d", h->sfi);
-    add_stat(row, "Solar flux", line);
-    snprintf(line, sizeof(line), "%d", h->k_index);
-    add_stat(row, "K index", line);
-    snprintf(line, sizeof(line), "%d", h->a_index);
-    add_stat(row, "A index", line);
+    snprintf(line, sizeof(line), "%d   %s", h->sfi, sfi_word(h->sfi));
+    add_stat(row, "Solar flux", line, "Energy from the sun. Higher helps 20 m through 10 m.");
+    snprintf(line, sizeof(line), "%d   %s", h->k_index, disturbance_word(h->k_index, false));
+    add_stat(row, "K index", line, "Disturbance right now, 0 to 9. Lower is better.");
+    snprintf(line, sizeof(line), "%d   %s", h->a_index, disturbance_word(h->a_index, true));
+    add_stat(row, "A index", line, "Same idea, averaged over the day. Lower is better.");
 }
 
 static esp_err_t load_slide_image(slideshow_ui_t *ui, const slide_def_t *slide)

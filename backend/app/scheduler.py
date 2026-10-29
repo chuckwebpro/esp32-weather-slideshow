@@ -9,7 +9,13 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.config import settings
 from app.render.outlook import render_spc_outlook_jpeg
 from app.render.placeholders import ensure_placeholder_jpeg
-from app.render.radar import composite_radar_jpeg, fetch_ridge_gif
+from app.render.radar import (
+    composite_iem_jpeg,
+    composite_radar_jpeg,
+    fetch_iem_reflectivity,
+    fetch_ridge_gif,
+)
+from app.render.ridge_geo import display_radar_bbox
 from app.services.alerts import fetch_alerts_geojson, parse_alerts_geojson
 from app.services.ham import fetch_ham
 from app.services.basemap import get_us_states_geojson
@@ -90,17 +96,29 @@ async def _refresh_radar(
     client: httpx.AsyncClient,
     alerts_geo: dict | None,
 ) -> None:
-    for url, name, title in (
-        (settings.ridge_reflectivity_url, "radar_reflectivity.jpg", "KFWS Reflectivity"),
-        (settings.ridge_velocity_url, "radar_velocity.jpg", "KFWS Velocity"),
-    ):
+    bbox = display_radar_bbox()
+    refl_out = store.media_path("radar_reflectivity.jpg")
+    try:
+        png = await fetch_iem_reflectivity(client, bbox)
+        rev = composite_iem_jpeg(png, alerts_geo, refl_out, "Reflectivity", bbox)
+        store.set_revision("radar_reflectivity.jpg", rev)
+        logger.info("Reflectivity from IEM N0Q")
+    except Exception:
+        logger.exception("IEM reflectivity failed; falling back to NWS Ridge GIF")
         try:
-            gif = await fetch_ridge_gif(client, url)
-            out = store.media_path(name)
-            rev = composite_radar_jpeg(gif, alerts_geo, out, title)
-            store.set_revision(name, rev)
+            gif = await fetch_ridge_gif(client, settings.ridge_reflectivity_url)
+            rev = composite_radar_jpeg(gif, alerts_geo, refl_out, "KFWS Reflectivity", bbox)
+            store.set_revision("radar_reflectivity.jpg", rev)
         except Exception:
-            logger.exception("Radar refresh failed for %s", name)
+            logger.exception("Ridge reflectivity failed")
+
+    try:
+        gif = await fetch_ridge_gif(client, settings.ridge_velocity_url)
+        out = store.media_path("radar_velocity.jpg")
+        rev = composite_radar_jpeg(gif, alerts_geo, out, "KFWS Velocity", bbox)
+        store.set_revision("radar_velocity.jpg", rev)
+    except Exception:
+        logger.exception("Radar refresh failed for radar_velocity.jpg")
 
 
 def ensure_bootstrap_media(store: DataStore) -> None:

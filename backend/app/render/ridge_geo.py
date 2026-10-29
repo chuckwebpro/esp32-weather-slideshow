@@ -55,6 +55,56 @@ def shift_bbox_km(
     return (lon_w + dlon, lat_s + dlat, lon_e + dlon, lat_n + dlat)
 
 
+def fit_bbox_to_aspect(
+    bbox: tuple[float, float, float, float],
+    *,
+    width_px: int,
+    height_px: int,
+) -> tuple[float, float, float, float]:
+    """Expand a lat/lon box, around its center, to the screen's aspect ratio.
+
+    A tall county box forced into a 1024×600 frame gets stretched sideways.
+    Growing the shorter side keeps shapes square and uses more of the source.
+    """
+    lon_w, lat_s, lon_e, lat_n = bbox
+    lat_c = (lat_s + lat_n) / 2.0
+    km_per_lat = 111.32
+    km_per_lon = 111.32 * math.cos(math.radians(lat_c))
+    width_km = max((lon_e - lon_w) * km_per_lon, 1.0)
+    height_km = max((lat_n - lat_s) * km_per_lat, 1.0)
+    target = width_px / height_px
+    aspect = width_km / height_km
+    if aspect < target:
+        width_km = height_km * target
+        half = (width_km / km_per_lon) / 2.0
+        mid = (lon_w + lon_e) / 2.0
+        lon_w, lon_e = mid - half, mid + half
+    elif aspect > target:
+        height_km = width_km / target
+        half = (height_km / km_per_lat) / 2.0
+        mid = (lat_s + lat_n) / 2.0
+        lat_s, lat_n = mid - half, mid + half
+    return (lon_w, lat_s, lon_e, lat_n)
+
+
+def display_radar_bbox() -> tuple[float, float, float, float]:
+    """BBox after the Ridge nudge, shaped for the panel."""
+    from app.config import settings
+
+    bbox = settings.radar_bbox
+    if settings.ridge_offset_km_east or settings.ridge_offset_km_north:
+        bbox = shift_bbox_km(
+            bbox,
+            settings.ridge_offset_km_east,
+            settings.ridge_offset_km_north,
+        )
+    return fit_bbox_to_aspect(
+        bbox,
+        width_px=settings.image_width,
+        height_px=settings.image_height,
+    )
+
+
 def crop_ridge_image_to_bbox(
     img: Image.Image,
     bbox: tuple[float, float, float, float],

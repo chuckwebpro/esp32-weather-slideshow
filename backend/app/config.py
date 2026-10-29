@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     ridge_velocity_url: str = (
         "https://radar.weather.gov/ridge/standard/base_velocity/KFWS_0.gif"
     )
+    # Iowa Environmental Mesonet N0Q composite, drawn at panel size for the view box.
+    # Cleaner than cropping the 600×550 Ridge GIF. Falls back to that GIF if IEM fails.
+    iem_n0q_wms_url: str = "https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0q.cgi"
 
     @field_validator("radar_bbox", mode="before")
     @classmethod
