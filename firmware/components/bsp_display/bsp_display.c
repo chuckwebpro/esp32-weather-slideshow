@@ -301,7 +301,9 @@ static esp_err_t lvgl_init()
             .buff_spiram = true,
             .sw_rotate = true,
 #if LVGL_VERSION_MAJOR >= 9
-            .swap_bytes = true,
+            /* Direct-mode DSI flushes the panel framebuffer in place.
+             * swap_bytes would invert RGB565 on every frame. */
+            .swap_bytes = false,
 #endif
 #if CONFIG_DISPLAY_LVGL_FULL_REFRESH
             .full_refresh = true,

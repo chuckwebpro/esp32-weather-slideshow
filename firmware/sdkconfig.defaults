@@ -41,7 +41,8 @@ CONFIG_LWIP_LOCAL_HOSTNAME="brain"
 # HTTP client buffer
 CONFIG_ESP_HTTP_CLIENT_ENABLE_HTTPS=y
 
-# Partition
-CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+# Partition (16 MB flash — factory app 4 MB; see partitions.csv)
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
 
 # JPEG slides (1024x600 RGB565 ~1.2MB) use heap_caps_malloc(..., MALLOC_CAP_SPIRAM) when SPIRAM is on
