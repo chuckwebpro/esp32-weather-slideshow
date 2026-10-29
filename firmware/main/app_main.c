@@ -59,17 +59,25 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    ESP_ERROR_CHECK(crowpanel_board_init());
-    lv_init();
+    /* WiFi/ESP-Hosted SDIO needs contiguous internal RAM — bring up before display/LVGL. */
+    for (int attempt = 0; attempt < 20; attempt++) {
+        esp_err_t werr = wifi_sta_connect();
+        if (werr == ESP_OK) {
+            break;
+        }
+        ESP_LOGW(TAG, "WiFi not ready (attempt %d): %s — retry in 5s", attempt + 1,
+                 esp_err_to_name(werr));
+        vTaskDelay(pdMS_TO_TICKS(5000));
+    }
 
-    ESP_ERROR_CHECK(wifi_sta_connect());
+    ESP_ERROR_CHECK(crowpanel_board_init());
 
     ESP_ERROR_CHECK(slideshow_client_init(CONFIG_SLIDESHOW_BASE_URL));
     ESP_ERROR_CHECK(alert_audio_init());
 
+    /* LVGL + display flush task started in display_init() via esp_lvgl_port. */
     crowpanel_lvgl_lock();
-    lv_obj_t *scr = lv_screen_active();
-    s_ui = slideshow_ui_create(scr);
+    s_ui = slideshow_ui_create(lv_screen_active());
     lv_timer_create(advance_timer_cb, CONFIG_SLIDESHOW_ADVANCE_MS, s_ui);
     crowpanel_lvgl_unlock();
 
@@ -77,9 +85,6 @@ void app_main(void)
 
     ESP_LOGI(TAG, "brain.local slideshow → %s", CONFIG_SLIDESHOW_BASE_URL);
     while (true) {
-        vTaskDelay(pdMS_TO_TICKS(5));
-        crowpanel_lvgl_lock();
-        lv_timer_handler();
-        crowpanel_lvgl_unlock();
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }

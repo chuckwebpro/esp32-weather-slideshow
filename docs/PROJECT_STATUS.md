@@ -36,7 +36,7 @@ Code is on `main` under [`firmware/`](../firmware/); **not validated on hardware
 - [ ] HAM band detail lines on UI (summary only today)
 - [ ] Home Assistant slide (post–v1)
 
-**Start here tomorrow:** [brain-setup.md](brain-setup.md) → Elecrow example → menuconfig → flash → [integration-test.md](integration-test.md) (brain section).
+**Start here:** [brain-setup.md](brain-setup.md) — ESP-IDF at `C:\esp32\v6.1\esp-idf` (run `export.ps1` / `export.bat` first) → Elecrow BSP → menuconfig → flash → [integration-test.md](integration-test.md) (brain section).
 
 ## API contract
 

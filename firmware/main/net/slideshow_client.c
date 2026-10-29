@@ -55,6 +55,18 @@ esp_err_t slideshow_client_init(const char *base_url)
     return ESP_OK;
 }
 
+static float json_get_double(const cJSON *obj, const char *key, float fallback)
+{
+    const cJSON *item = cJSON_GetObjectItem(obj, key);
+    return cJSON_IsNumber(item) ? (float)item->valuedouble : fallback;
+}
+
+static int json_get_int(const cJSON *obj, const char *key, int fallback)
+{
+    const cJSON *item = cJSON_GetObjectItem(obj, key);
+    return cJSON_IsNumber(item) ? item->valueint : fallback;
+}
+
 static slide_type_t parse_slide_type(const char *s)
 {
     if (!s) {
@@ -82,12 +94,12 @@ static void parse_weather(cJSON *root, weather_data_t *w)
         w->valid = false;
         return;
     }
-    w->temperature_f = (float)cJSON_GetObjectItem(wx, "temperature_f")?->valuedouble;
-    w->feels_like_f = (float)cJSON_GetObjectItem(wx, "feels_like_f")?->valuedouble;
-    w->humidity_pct = (float)cJSON_GetObjectItem(wx, "humidity_pct")?->valuedouble;
-    w->wind_mph = (float)cJSON_GetObjectItem(wx, "wind_mph")?->valuedouble;
-    w->pressure_inhg = (float)cJSON_GetObjectItem(wx, "pressure_inhg")?->valuedouble;
-    w->uv_index = (float)cJSON_GetObjectItem(wx, "uv_index")?->valuedouble;
+    w->temperature_f = json_get_double(wx, "temperature_f", 0.f);
+    w->feels_like_f = json_get_double(wx, "feels_like_f", 0.f);
+    w->humidity_pct = json_get_double(wx, "humidity_pct", 0.f);
+    w->wind_mph = json_get_double(wx, "wind_mph", 0.f);
+    w->pressure_inhg = json_get_double(wx, "pressure_inhg", 0.f);
+    w->uv_index = json_get_double(wx, "uv_index", 0.f);
     const cJSON *wd = cJSON_GetObjectItem(wx, "wind_direction");
     if (cJSON_IsString(wd)) {
         strncpy(w->wind_direction, wd->valuestring, sizeof(w->wind_direction) - 1);
@@ -114,9 +126,9 @@ static void parse_ham(cJSON *root, ham_data_t *h)
         h->valid = false;
         return;
     }
-    h->sfi = cJSON_GetObjectItem(ham, "sfi")?->valueint;
-    h->k_index = cJSON_GetObjectItem(ham, "k_index")?->valueint;
-    h->a_index = cJSON_GetObjectItem(ham, "a_index")?->valueint;
+    h->sfi = json_get_int(ham, "sfi", 0);
+    h->k_index = json_get_int(ham, "k_index", 0);
+    h->a_index = json_get_int(ham, "a_index", 0);
     const cJSON *sum = cJSON_GetObjectItem(ham, "summary");
     if (cJSON_IsString(sum)) {
         strncpy(h->summary, sum->valuestring, sizeof(h->summary) - 1);
@@ -149,11 +161,11 @@ esp_err_t slideshow_fetch_manifest(slideshow_manifest_t *out)
     }
 
     out->refresh_after_ms =
-        (uint32_t)cJSON_GetObjectItem(root, "refresh_after_sec")?->valueint * 1000U;
+        (uint32_t)json_get_int(root, "refresh_after_sec", 0) * 1000U;
     cJSON *playback = cJSON_GetObjectItem(root, "playback");
     if (cJSON_IsObject(playback)) {
         out->advance_ms =
-            (uint32_t)cJSON_GetObjectItem(playback, "advance_sec")?->valueint * 1000U;
+            (uint32_t)json_get_int(playback, "advance_sec", 0) * 1000U;
     }
     if (out->advance_ms == 0) {
         out->advance_ms = 10000;
@@ -169,7 +181,8 @@ esp_err_t slideshow_fetch_manifest(slideshow_manifest_t *out)
             if (cJSON_IsString(id)) {
                 strncpy(d->id, id->valuestring, sizeof(d->id) - 1);
             }
-            d->type = parse_slide_type(cJSON_GetObjectItem(s, "type")?->valuestring);
+            const cJSON *type_item = cJSON_GetObjectItem(s, "type");
+            d->type = parse_slide_type(cJSON_IsString(type_item) ? type_item->valuestring : NULL);
             const cJSON *title = cJSON_GetObjectItem(s, "title");
             if (cJSON_IsString(title)) {
                 strncpy(d->title, title->valuestring, sizeof(d->title) - 1);
@@ -226,9 +239,7 @@ esp_err_t slideshow_fetch_image(const char *relative_url, uint8_t **out_buf, siz
     } else {
         snprintf(url, sizeof(url), "%s/%s", s_base_url, relative_url);
     }
-    char *body = NULL;
-    int len = 0;
-    /* Binary JPEG — use dedicated read; simplified: treat as buffer (JPEG contains nulls — broken) */
+    /* Binary JPEG — read into raw buffer (not null-terminated string). */
     esp_http_client_config_t cfg = { .url = url, .timeout_ms = 20000 };
     esp_http_client_handle_t client = esp_http_client_init(&cfg);
     if (!client) {

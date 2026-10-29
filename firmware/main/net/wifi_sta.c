@@ -39,14 +39,24 @@ esp_err_t wifi_sta_connect(void)
 
     esp_netif_create_default_wifi_sta();
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    esp_err_t err = esp_wifi_init(&cfg);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "esp_wifi_init failed: %s (ESP-Hosted link / SDIO pins?)", esp_err_to_name(err));
+        return err;
+    }
 
     esp_event_handler_instance_t inst_wifi;
     esp_event_handler_instance_t inst_ip;
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(
-        WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_event_handler, NULL, &inst_wifi));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(
-        IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event_handler, NULL, &inst_ip));
+    err = esp_event_handler_instance_register(
+        WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_event_handler, NULL, &inst_wifi);
+    if (err != ESP_OK) {
+        return err;
+    }
+    err = esp_event_handler_instance_register(
+        IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event_handler, NULL, &inst_ip);
+    if (err != ESP_OK) {
+        return err;
+    }
 
     wifi_config_t wifi_cfg = {0};
     strlcpy((char *)wifi_cfg.sta.ssid, CONFIG_SLIDESHOW_WIFI_SSID, sizeof(wifi_cfg.sta.ssid));
@@ -54,9 +64,18 @@ esp_err_t wifi_sta_connect(void)
             sizeof(wifi_cfg.sta.password));
     wifi_cfg.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
 
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg));
-    ESP_ERROR_CHECK(esp_wifi_start());
+    err = esp_wifi_set_mode(WIFI_MODE_STA);
+    if (err != ESP_OK) {
+        return err;
+    }
+    err = esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
+    if (err != ESP_OK) {
+        return err;
+    }
+    err = esp_wifi_start();
+    if (err != ESP_OK) {
+        return err;
+    }
 
     EventBits_t bits = xEventGroupWaitBits(
         s_wifi_events, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE, pdFALSE,
