@@ -55,7 +55,7 @@ TrueNAS often **reuses a cached `latest` image** on a simple restart. You do **n
 
 ## Radar crop tuning
 
-Shift the view on the host without rebuilding. The box is then widened to the panel's 16:10 shape so the image is not stretched. Reflectivity is drawn from the Iowa Environmental Mesonet N0Q mosaic (a cleaner full-frame picture). If that fetch fails, the API falls back to the NWS Ridge GIF. Velocity is still the Ridge GIF, cropped to the same wider box.
+Shift the view on the host without rebuilding. The box is then widened to the panel's 16:10 shape so the image is not stretched. Reflectivity is drawn from the Iowa Environmental Mesonet N0Q mosaic over county outlines and names. If that fetch fails, the API falls back to the NWS Ridge GIF. Velocity is still the Ridge GIF, cropped to the same wider box.
 
 | Variable | Example | Meaning |
 |----------|---------|---------|

@@ -8,6 +8,7 @@ import httpx
 from PIL import Image, ImageDraw
 
 from app.config import settings
+from app.render.counties import county_overlays, draw_county_land, draw_county_lines_and_names
 from app.render.geo import feature_collection_to_shapes, merge_polygons, polygon_to_pixel_ring
 from app.render.ridge_geo import crop_ridge_image_to_bbox
 
@@ -94,7 +95,7 @@ def composite_iem_jpeg(
     title: str,
     bbox: tuple[float, float, float, float],
 ) -> str:
-    """Place a transparent N0Q render on a dark field at the panel size."""
+    """Place a transparent N0Q render over county outlines at the panel size."""
     width = settings.image_width
     height = settings.image_height
     with Image.open(io.BytesIO(png_bytes)) as src:
@@ -102,8 +103,12 @@ def composite_iem_jpeg(
         if radar.size != (width, height):
             radar = radar.resize((width, height), Image.Resampling.LANCZOS)
     img = Image.new("RGB", (width, height), (8, 12, 20))
+    overlays = county_overlays(bbox, width, height)
+    base = ImageDraw.Draw(img)
+    draw_county_land(base, overlays)
     img.paste(radar, (0, 0), radar)
     draw = ImageDraw.Draw(img, "RGBA")
+    draw_county_lines_and_names(draw, overlays)
     draw.rectangle((0, 0, width, 28), fill=(0, 0, 0, 160))
     draw.text((8, 6), title, fill=(255, 255, 255))
     if alert_geojson:
