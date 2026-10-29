@@ -76,16 +76,44 @@ def iem_reflectivity_url(
     )
 
 
-async def fetch_iem_reflectivity(
-    client: httpx.AsyncClient,
+def iem_velocity_url(
     bbox: tuple[float, float, float, float],
-) -> bytes:
-    url = iem_reflectivity_url(bbox, settings.image_width, settings.image_height)
+    width: int,
+    height: int,
+) -> str:
+    lon_w, lat_s, lon_e, lat_n = bbox
+    return (
+        f"{settings.iem_ridge_wms_url}?sector={settings.iem_radar_sector}"
+        f"&prod={settings.iem_velocity_product}"
+        "&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap"
+        "&LAYERS=single&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE"
+        f"&SRS=EPSG:4326&BBOX={lon_w:.5f},{lat_s:.5f},{lon_e:.5f},{lat_n:.5f}"
+        f"&WIDTH={width}&HEIGHT={height}"
+    )
+
+
+async def fetch_iem_image(client: httpx.AsyncClient, url: str) -> bytes:
     r = await client.get(url, timeout=60.0)
     r.raise_for_status()
     if "image" not in r.headers.get("content-type", ""):
         raise ValueError(f"IEM radar was not an image ({r.headers.get('content-type')})")
     return r.content
+
+
+async def fetch_iem_reflectivity(
+    client: httpx.AsyncClient,
+    bbox: tuple[float, float, float, float],
+) -> bytes:
+    url = iem_reflectivity_url(bbox, settings.image_width, settings.image_height)
+    return await fetch_iem_image(client, url)
+
+
+async def fetch_iem_velocity(
+    client: httpx.AsyncClient,
+    bbox: tuple[float, float, float, float],
+) -> bytes:
+    url = iem_velocity_url(bbox, settings.image_width, settings.image_height)
+    return await fetch_iem_image(client, url)
 
 
 def composite_iem_jpeg(

@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     # Iowa Environmental Mesonet N0Q composite, drawn at panel size for the view box.
     # Cleaner than cropping the 600×550 Ridge GIF. Falls back to that GIF if IEM fails.
     iem_n0q_wms_url: str = "https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0q.cgi"
+    # Single-site RIDGE WMS. Sector is the 3-letter id (FWS), not KFWS.
+    iem_ridge_wms_url: str = "https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/ridge.cgi"
+    iem_radar_sector: str = "FWS"
+    iem_velocity_product: str = "N0U"
 
     @field_validator("radar_bbox", mode="before")
     @classmethod

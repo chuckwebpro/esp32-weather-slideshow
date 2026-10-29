@@ -13,6 +13,7 @@ from app.render.radar import (
     composite_iem_jpeg,
     composite_radar_jpeg,
     fetch_iem_reflectivity,
+    fetch_iem_velocity,
     fetch_ridge_gif,
 )
 from app.render.ridge_geo import display_radar_bbox
@@ -112,13 +113,20 @@ async def _refresh_radar(
         except Exception:
             logger.exception("Ridge reflectivity failed")
 
+    vel_out = store.media_path("radar_velocity.jpg")
     try:
-        gif = await fetch_ridge_gif(client, settings.ridge_velocity_url)
-        out = store.media_path("radar_velocity.jpg")
-        rev = composite_radar_jpeg(gif, alerts_geo, out, "KFWS Velocity", bbox)
+        png = await fetch_iem_velocity(client, bbox)
+        rev = composite_iem_jpeg(png, alerts_geo, vel_out, "Velocity", bbox)
         store.set_revision("radar_velocity.jpg", rev)
+        logger.info("Velocity from IEM %s %s", settings.iem_radar_sector, settings.iem_velocity_product)
     except Exception:
-        logger.exception("Radar refresh failed for radar_velocity.jpg")
+        logger.exception("IEM velocity failed; falling back to NWS Ridge GIF")
+        try:
+            gif = await fetch_ridge_gif(client, settings.ridge_velocity_url)
+            rev = composite_radar_jpeg(gif, alerts_geo, vel_out, "KFWS Velocity", bbox)
+            store.set_revision("radar_velocity.jpg", rev)
+        except Exception:
+            logger.exception("Ridge velocity failed")
 
 
 def ensure_bootstrap_media(store: DataStore) -> None:
