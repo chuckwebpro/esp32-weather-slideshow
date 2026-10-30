@@ -6,6 +6,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 from app.models.slideshow import ForecastDay
+from app.render.weather_icons import weather_icon
 
 _FONT_DIR = Path(__file__).resolve().parent.parent / "assets" / "fonts"
 _CARD = (28, 28, 28)
@@ -85,7 +86,20 @@ def render_forecast_jpeg(
         card_w = (width - margin_x * 2 - gap * (n - 1)) / n
         for i, day in enumerate(days):
             x = margin_x + i * (card_w + gap)
-            _draw_day(draw, day, x, top, card_w, card_h, day_font, date_font, high_font, low_font, body_font)
+            _draw_day(
+                img,
+                draw,
+                day,
+                x,
+                top,
+                card_w,
+                card_h,
+                day_font,
+                date_font,
+                high_font,
+                low_font,
+                body_font,
+            )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path, format="JPEG", quality=90)
@@ -99,6 +113,7 @@ def _temp(value: float | None) -> str:
 
 
 def _draw_day(
+    img: Image.Image,
     draw: ImageDraw.ImageDraw,
     day: ForecastDay,
     x: float,
@@ -119,14 +134,18 @@ def _draw_day(
 
     cx = x + w / 2
     text_w = int(w - 16)
-    draw.text((cx, y + 28), day.day_label, font=day_font, fill=_WHITE, anchor="mt")
-    draw.text((cx, y + 64), day.date_label, font=date_font, fill=_MUTED, anchor="mt")
-    draw.text((cx, y + 128), _temp(day.high_f), font=high_font, fill=_WHITE, anchor="mt")
+    draw.text((cx, y + 22), day.day_label, font=day_font, fill=_WHITE, anchor="mt")
+    draw.text((cx, y + 54), day.date_label, font=date_font, fill=_MUTED, anchor="mt")
+
+    icon = weather_icon(day.weather_code, 68)
+    img.paste(icon, (int(round(cx - icon.width / 2)), int(round(y + 86))), icon)
+
+    draw.text((cx, y + 162), _temp(day.high_f), font=high_font, fill=_WHITE, anchor="mt")
     low = _temp(day.low_f)
-    draw.text((cx, y + 188), f"Low {low}", font=low_font, fill=_HINT, anchor="mt")
+    draw.text((cx, y + 220), f"Low {low}", font=low_font, fill=_HINT, anchor="mt")
 
     lines = _wrap(draw, day.conditions, body_font, text_w)
-    line_y = y + 250
+    line_y = y + 264
     for line in lines:
         draw.text((cx, line_y), line, font=body_font, fill=_WHITE, anchor="mt")
         line_y += 26

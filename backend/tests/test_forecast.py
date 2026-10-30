@@ -24,3 +24,12 @@ def test_forecast_jpeg_is_panel_sized(tmp_path: Path):
     assert len(rev) == 12
     with Image.open(out) as img:
         assert img.size == (1024, 600)
+
+
+def test_weather_icons_are_visible():
+    from app.render.weather_icons import weather_icon
+
+    for code in (0, 2, 3, 45, 51, 63, 71, 95):
+        icon = weather_icon(code, 68)
+        assert icon.size == (68, 68)
+        assert icon.getextrema()[-1][1] > 200
