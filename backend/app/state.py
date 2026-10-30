@@ -6,12 +6,13 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from app.models.slideshow import AlertItem, HamSnapshot, WeatherSnapshot
+from app.models.slideshow import AlertItem, ForecastDay, HamSnapshot, WeatherSnapshot
 
 
 @dataclass
 class CacheState:
     weather: WeatherSnapshot | None = None
+    forecast: list[ForecastDay] = field(default_factory=list)
     ham: HamSnapshot | None = None
     alerts: list[AlertItem] = field(default_factory=list)
     media_revisions: dict[str, str] = field(default_factory=dict)
@@ -49,6 +50,7 @@ class DataStore:
         with self._lock:
             return CacheState(
                 weather=self.state.weather,
+                forecast=list(self.state.forecast),
                 ham=self.state.ham,
                 alerts=list(self.state.alerts),
                 media_revisions=dict(self.state.media_revisions),

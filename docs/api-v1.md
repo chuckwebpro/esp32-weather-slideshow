@@ -39,14 +39,19 @@ Primary poll endpoint for **brain.local**.
 ### Slide IDs (initial order)
 
 1. `current_weather` — type `weather`
-2. `radar_reflectivity` — type `image`
-3. `radar_velocity` — type `image`
-4. `ham_band_conditions` — type `ham`
-5. `spc_day1_cat` — type `outlook`
+2. `forecast_7day` — type `image` (rendered JPEG)
+3. `radar_reflectivity` — type `image`
+4. `radar_velocity` — type `image`
+5. `ham_band_conditions` — type `ham`
+6. `spc_day1_cat` — type `outlook`
 
 ### Weather object
 
 `temperature_f`, `feels_like_f`, `humidity_pct`, `wind_mph`, `wind_direction`, `pressure_inhg`, `uv_index`, `conditions`, `sunrise`, `sunset`
+
+### Forecast
+
+`forecast` is a list of seven days used to draw `forecast_7day.jpg`. Each day has `day_label`, `date_label`, `conditions`, `high_f`, `low_f`, `precip_pct`, and `weather_code`. The panel shows the JPEG, not this object.
 
 ### HAM object
 
@@ -62,6 +67,7 @@ Pre-composited JPEGs at **1024×600**. Query `?r=` from slide `url` is optional 
 
 Files:
 
+- `forecast_7day.jpg`
 - `radar_reflectivity.jpg`
 - `radar_velocity.jpg`
 - `spc_day1_cat.jpg`

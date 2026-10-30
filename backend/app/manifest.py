@@ -11,6 +11,7 @@ from app.state import DataStore
 
 def build_slideshow_response(store: DataStore) -> SlideshowResponse:
     base = f"/media"
+    rev_forecast = store.get_revision("forecast_7day.jpg")
     rev_radar_refl = store.get_revision("radar_reflectivity.jpg")
     rev_radar_vel = store.get_revision("radar_velocity.jpg")
     rev_outlook = store.get_revision("spc_day1_cat.jpg")
@@ -21,6 +22,13 @@ def build_slideshow_response(store: DataStore) -> SlideshowResponse:
             type="weather",
             title="Current Weather",
             revision=store.get_revision("weather"),
+        ),
+        SlideItem(
+            id="forecast_7day",
+            type="image",
+            title="7-Day Forecast",
+            url=f"{base}/forecast_7day.jpg?r={rev_forecast}",
+            revision=rev_forecast,
         ),
         SlideItem(
             id="radar_reflectivity",
@@ -58,6 +66,7 @@ def build_slideshow_response(store: DataStore) -> SlideshowResponse:
         playback=PlaybackMeta(advance_sec=settings.playback_advance_sec, paused=False),
         slides=slides,
         weather=snap.weather,
+        forecast=snap.forecast,
         ham=snap.ham,
         alerts=snap.alerts,
     )

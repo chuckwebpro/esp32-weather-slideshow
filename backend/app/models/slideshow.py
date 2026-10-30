@@ -19,6 +19,16 @@ class SlideItem(BaseModel):
     revision: str
 
 
+class ForecastDay(BaseModel):
+    day_label: str
+    date_label: str
+    conditions: str
+    high_f: float | None = None
+    low_f: float | None = None
+    precip_pct: int | None = None
+    weather_code: int | None = None
+
+
 class WeatherSnapshot(BaseModel):
     temperature_f: float | None = None
     feels_like_f: float | None = None
@@ -59,5 +69,6 @@ class SlideshowResponse(BaseModel):
     playback: PlaybackMeta
     slides: list[SlideItem]
     weather: WeatherSnapshot | None = None
+    forecast: list[ForecastDay] = Field(default_factory=list)
     ham: HamSnapshot | None = None
     alerts: list[AlertItem] = Field(default_factory=list)

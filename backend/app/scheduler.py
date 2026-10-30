@@ -7,6 +7,7 @@ import httpx
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.config import settings
+from app.render.forecast import render_forecast_jpeg
 from app.render.outlook import render_spc_outlook_jpeg
 from app.render.placeholders import ensure_placeholder_jpeg
 from app.render.radar import (
@@ -21,7 +22,7 @@ from app.services.alerts import fetch_alerts_geojson, parse_alerts_geojson
 from app.services.ham import fetch_ham
 from app.services.basemap import get_us_states_geojson
 from app.services.spc import fetch_spc_geojson
-from app.services.weather import fetch_weather
+from app.services.weather import fetch_forecast, fetch_weather
 from app.state import DataStore
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,7 @@ async def refresh_all(store: DataStore) -> None:
     logger.info("Starting refresh cycle")
     async with httpx.AsyncClient(follow_redirects=True) as client:
         await _refresh_weather(store, client)
+        await _refresh_forecast(store, client)
         alerts_geo = await _refresh_alerts(store, client)
         await _refresh_ham(store, client)
         await _refresh_spc(store, client)
@@ -49,6 +51,20 @@ async def _refresh_weather(store: DataStore, client: httpx.AsyncClient) -> None:
         store.save_json_cache("weather", snap.model_dump())
     except Exception:
         logger.exception("Weather refresh failed")
+
+
+async def _refresh_forecast(store: DataStore, client: httpx.AsyncClient) -> None:
+    try:
+        days, _rev = await fetch_forecast(client)
+        out = store.media_path("forecast_7day.jpg")
+        rev = render_forecast_jpeg(days, out)
+        store.set_revision("forecast_7day.jpg", rev)
+        with store._lock:
+            store.state.forecast = days
+        store.save_json_cache("forecast", [day.model_dump() for day in days])
+        logger.info("7-day forecast rendered, %d days, revision=%s", len(days), rev)
+    except Exception:
+        logger.exception("Forecast refresh failed")
 
 
 async def _refresh_alerts(store: DataStore, client: httpx.AsyncClient) -> dict | None:
@@ -134,6 +150,7 @@ def ensure_bootstrap_media(store: DataStore) -> None:
     for name, title in (
         ("radar_reflectivity.jpg", "Radar Reflectivity (placeholder)"),
         ("radar_velocity.jpg", "Radar Velocity (placeholder)"),
+        ("forecast_7day.jpg", "7-Day Forecast (placeholder)"),
         ("spc_day1_cat.jpg", "SPC Outlook (placeholder)"),
     ):
         ensure_placeholder_jpeg(store.media_path(name), w, h, title)
