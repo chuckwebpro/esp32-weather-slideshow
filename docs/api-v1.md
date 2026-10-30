@@ -38,7 +38,7 @@ Primary poll endpoint for **brain.local**.
 
 ### Slide IDs (initial order)
 
-1. `current_weather` — type `weather`
+1. `current_weather` — type `image` (rendered JPEG, includes the condition icon)
 2. `forecast_7day` — type `image` (rendered JPEG)
 3. `radar_reflectivity` — type `image`
 4. `radar_velocity` — type `image`
@@ -47,7 +47,7 @@ Primary poll endpoint for **brain.local**.
 
 ### Weather object
 
-`temperature_f`, `feels_like_f`, `humidity_pct`, `wind_mph`, `wind_direction`, `pressure_inhg`, `uv_index`, `conditions`, `sunrise`, `sunset`
+`temperature_f`, `feels_like_f`, `humidity_pct`, `wind_mph`, `wind_direction`, `pressure_inhg`, `uv_index`, `conditions`, `weather_code`, `sunrise`, `sunset`. The panel shows `current_weather.jpg`.
 
 ### Forecast
 
@@ -67,6 +67,7 @@ Pre-composited JPEGs at **1024×600**. Query `?r=` from slide `url` is optional 
 
 Files:
 
+- `current_weather.jpg`
 - `forecast_7day.jpg`
 - `radar_reflectivity.jpg`
 - `radar_velocity.jpg`
@@ -82,9 +83,9 @@ Files:
   "slides": [
     {
       "id": "current_weather",
-      "type": "weather",
+      "type": "image",
       "title": "Current Weather",
-      "url": null,
+      "url": "/media/current_weather.jpg?r=a1b2c3d4e5f6",
       "revision": "a1b2c3d4e5f6"
     },
     {

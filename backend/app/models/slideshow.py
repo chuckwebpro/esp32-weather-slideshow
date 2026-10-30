@@ -38,6 +38,7 @@ class WeatherSnapshot(BaseModel):
     pressure_inhg: float | None = None
     uv_index: float | None = None
     conditions: str | None = None
+    weather_code: int | None = None
     sunrise: str | None = None
     sunset: str | None = None
 

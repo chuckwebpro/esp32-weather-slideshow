@@ -73,6 +73,7 @@ async def fetch_weather(client: httpx.AsyncClient) -> tuple[WeatherSnapshot, str
         pressure_inhg=_hpa_to_inhg(current.get("surface_pressure")),
         uv_index=current.get("uv_index"),
         conditions=conditions,
+        weather_code=None if code is None else int(code),
         sunrise=_format_local_time(sunrise_raw),
         sunset=_format_local_time(sunset_raw),
     )

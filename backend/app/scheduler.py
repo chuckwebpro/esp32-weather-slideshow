@@ -7,6 +7,7 @@ import httpx
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.config import settings
+from app.render.current_weather import render_current_weather_jpeg
 from app.render.forecast import render_forecast_jpeg
 from app.render.outlook import render_spc_outlook_jpeg
 from app.render.placeholders import ensure_placeholder_jpeg
@@ -49,6 +50,10 @@ async def _refresh_weather(store: DataStore, client: httpx.AsyncClient) -> None:
             store.state.weather = snap
         store.set_revision("weather", rev)
         store.save_json_cache("weather", snap.model_dump())
+        out = store.media_path("current_weather.jpg")
+        file_rev = render_current_weather_jpeg(snap, out)
+        store.set_revision("current_weather.jpg", file_rev)
+        logger.info("Current weather rendered, revision=%s", file_rev)
     except Exception:
         logger.exception("Weather refresh failed")
 
@@ -148,6 +153,7 @@ async def _refresh_radar(
 def ensure_bootstrap_media(store: DataStore) -> None:
     w, h = settings.image_width, settings.image_height
     for name, title in (
+        ("current_weather.jpg", "Current Weather (placeholder)"),
         ("radar_reflectivity.jpg", "Radar Reflectivity (placeholder)"),
         ("radar_velocity.jpg", "Radar Velocity (placeholder)"),
         ("forecast_7day.jpg", "7-Day Forecast (placeholder)"),

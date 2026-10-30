@@ -11,6 +11,7 @@ from app.state import DataStore
 
 def build_slideshow_response(store: DataStore) -> SlideshowResponse:
     base = f"/media"
+    rev_current = store.get_revision("current_weather.jpg")
     rev_forecast = store.get_revision("forecast_7day.jpg")
     rev_radar_refl = store.get_revision("radar_reflectivity.jpg")
     rev_radar_vel = store.get_revision("radar_velocity.jpg")
@@ -19,9 +20,10 @@ def build_slideshow_response(store: DataStore) -> SlideshowResponse:
     slides: list[SlideItem] = [
         SlideItem(
             id="current_weather",
-            type="weather",
+            type="image",
             title="Current Weather",
-            revision=store.get_revision("weather"),
+            url=f"{base}/current_weather.jpg?r={rev_current}",
+            revision=rev_current,
         ),
         SlideItem(
             id="forecast_7day",

@@ -7,6 +7,7 @@ from app.state import DataStore
 def test_slideshow_has_six_slides(tmp_path: Path):
     store = DataStore(tmp_path)
     store.set_revision("weather", "w1")
+    store.set_revision("current_weather.jpg", "c1")
     store.set_revision("ham", "h1")
     store.set_revision("forecast_7day.jpg", "f1")
     store.set_revision("radar_reflectivity.jpg", "r1")
@@ -16,6 +17,8 @@ def test_slideshow_has_six_slides(tmp_path: Path):
     resp = build_slideshow_response(store)
     assert len(resp.slides) == 6
     assert resp.slides[0].id == "current_weather"
+    assert resp.slides[0].type == "image"
+    assert "current_weather.jpg" in (resp.slides[0].url or "")
     assert resp.slides[1].id == "forecast_7day"
     assert resp.slides[1].type == "image"
     assert "forecast_7day.jpg" in (resp.slides[1].url or "")
