@@ -15,6 +15,7 @@ def build_slideshow_response(store: DataStore) -> SlideshowResponse:
     rev_forecast = store.get_revision("forecast_7day.jpg")
     rev_radar_refl = store.get_revision("radar_reflectivity.jpg")
     rev_radar_vel = store.get_revision("radar_velocity.jpg")
+    rev_ham = store.get_revision("ham_band_conditions.jpg")
     rev_outlook = store.get_revision("spc_day1_cat.jpg")
 
     slides: list[SlideItem] = [
@@ -48,9 +49,10 @@ def build_slideshow_response(store: DataStore) -> SlideshowResponse:
         ),
         SlideItem(
             id="ham_band_conditions",
-            type="ham",
+            type="image",
             title="HF Band Conditions",
-            revision=store.get_revision("ham"),
+            url=f"{base}/ham_band_conditions.jpg?r={rev_ham}",
+            revision=rev_ham,
         ),
         SlideItem(
             id="spc_day1_cat",

@@ -42,7 +42,7 @@ Primary poll endpoint for **brain.local**.
 2. `forecast_7day` — type `image` (rendered JPEG)
 3. `radar_reflectivity` — type `image`
 4. `radar_velocity` — type `image`
-5. `ham_band_conditions` — type `ham`
+5. `ham_band_conditions` — type `image` (80–10 m, day and night)
 6. `spc_day1_cat` — type `outlook`
 
 ### Weather object
@@ -55,7 +55,7 @@ Primary poll endpoint for **brain.local**.
 
 ### HAM object
 
-`sfi`, `k_index`, `a_index`, `summary`, `bands[]` with `band`, `day`, `night`
+`sfi`, `k_index`, `a_index`, `summary`, `bands[]` with `band`, `day`, `night`. The panel shows `ham_band_conditions.jpg`: 80–40 m, 30–20 m, 17–15 m, and 12–10 m.
 
 ### Alert object
 
@@ -71,6 +71,7 @@ Files:
 - `forecast_7day.jpg`
 - `radar_reflectivity.jpg`
 - `radar_velocity.jpg`
+- `ham_band_conditions.jpg`
 - `spc_day1_cat.jpg`
 
 ## Example

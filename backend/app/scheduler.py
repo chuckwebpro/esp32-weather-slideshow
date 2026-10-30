@@ -9,6 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.config import settings
 from app.render.current_weather import render_current_weather_jpeg
 from app.render.forecast import render_forecast_jpeg
+from app.render.ham_bands import render_ham_jpeg
 from app.render.outlook import render_spc_outlook_jpeg
 from app.render.placeholders import ensure_placeholder_jpeg
 from app.render.radar import (
@@ -92,6 +93,10 @@ async def _refresh_ham(store: DataStore, client: httpx.AsyncClient) -> None:
             store.state.ham = snap
         store.set_revision("ham", rev)
         store.save_json_cache("ham", snap.model_dump())
+        out = store.media_path("ham_band_conditions.jpg")
+        file_rev = render_ham_jpeg(snap, out)
+        store.set_revision("ham_band_conditions.jpg", file_rev)
+        logger.info("HF bands rendered, revision=%s", file_rev)
     except Exception:
         logger.exception("HAM refresh failed")
 
@@ -157,6 +162,7 @@ def ensure_bootstrap_media(store: DataStore) -> None:
         ("radar_reflectivity.jpg", "Radar Reflectivity (placeholder)"),
         ("radar_velocity.jpg", "Radar Velocity (placeholder)"),
         ("forecast_7day.jpg", "7-Day Forecast (placeholder)"),
+        ("ham_band_conditions.jpg", "HF Band Conditions (placeholder)"),
         ("spc_day1_cat.jpg", "SPC Outlook (placeholder)"),
     ):
         ensure_placeholder_jpeg(store.media_path(name), w, h, title)

@@ -9,6 +9,7 @@ def test_slideshow_has_six_slides(tmp_path: Path):
     store.set_revision("weather", "w1")
     store.set_revision("current_weather.jpg", "c1")
     store.set_revision("ham", "h1")
+    store.set_revision("ham_band_conditions.jpg", "hb1")
     store.set_revision("forecast_7day.jpg", "f1")
     store.set_revision("radar_reflectivity.jpg", "r1")
     store.set_revision("radar_velocity.jpg", "r2")
@@ -24,3 +25,6 @@ def test_slideshow_has_six_slides(tmp_path: Path):
     assert "forecast_7day.jpg" in (resp.slides[1].url or "")
     assert resp.slides[2].type == "image"
     assert "radar_reflectivity.jpg" in (resp.slides[2].url or "")
+    ham = next(slide for slide in resp.slides if slide.id == "ham_band_conditions")
+    assert ham.type == "image"
+    assert "ham_band_conditions.jpg" in (ham.url or "")
